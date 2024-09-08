@@ -2,6 +2,7 @@ package com.javarush;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.javarush.config;
 import com.javarush.dao.CityDAO;
 import com.javarush.dao.CountryDAO;
 import com.javarush.domain.City;
@@ -24,6 +25,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.javarush.config.getRedisClient;
+import static com.javarush.config.getSessionFactory;
 import static java.util.Objects.nonNull;
 
 public class Main {
@@ -35,35 +38,6 @@ public class Main {
 
     private final CityDAO cityDAO;
     private final CountryDAO countryDAO;
-
-    private SessionFactory prepareRelationalDb() {
-        final SessionFactory sessionFactory;
-        Properties properties = new Properties();
-        properties.put(Environment.DIALECT, "org.hibernate.dialect.MySQL8Dialect");
-        properties.put(Environment.DRIVER, "com.p6spy.engine.spy.P6SpyDriver");
-        properties.put(Environment.URL, "jdbc:p6spy:mysql://localhost:30306/world");
-        properties.put(Environment.USER, "root");
-        properties.put(Environment.PASS, "root");
-        properties.put(Environment.CURRENT_SESSION_CONTEXT_CLASS, "thread");
-        properties.put(Environment.HBM2DDL_AUTO, "validate");
-        properties.put(Environment.STATEMENT_BATCH_SIZE, "100");
-
-        sessionFactory = new Configuration()
-                .addAnnotatedClass(City.class)
-                .addAnnotatedClass(Country.class)
-                .addAnnotatedClass(CountryLanguage.class)
-                .addProperties(properties)
-                .buildSessionFactory();
-        return sessionFactory;
-    }
-
-    private RedisClient prepareRedisClient() {
-        RedisClient redisClient = RedisClient.create(RedisURI.create("localhost", 6379));
-        try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
-            System.out.println("\nConnected to Redis\n");
-        }
-        return redisClient;
-    }
 
     private void testRedisData(List<Integer> ids) {
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
@@ -91,11 +65,11 @@ public class Main {
     }
 
     public Main() {
-        sessionFactory = prepareRelationalDb();
+        sessionFactory = getSessionFactory();
         cityDAO = new CityDAO(sessionFactory);
         countryDAO = new CountryDAO(sessionFactory);
 
-        redisClient = prepareRedisClient();
+        redisClient = getRedisClient();
         mapper = new ObjectMapper();
     }
 
@@ -171,6 +145,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
+        System.out.println("Please, compare the results of fetching data from MySQL and Redis");
         Main main = new Main();
         List<City> allCities = main.fetchData(main);
         List<CityCountry> preparedData = main.transformData(allCities);
@@ -190,10 +165,16 @@ public class Main {
         main.testMysqlData(ids);
         long stopMysql = System.currentTimeMillis();
 
+        System.out.println("Please, compare the results of fetching data from MySQL and Redis");
         System.out.printf("%s:\t%d ms\n", "Redis", (stopRedis - startRedis));
         System.out.printf("%s:\t%d ms\n", "MySQL", (stopMysql - startMysql));
 
-
         main.shutdown();
     }
+
+//    public void setSessionFactory(SessionFactory sessionFactory) {
+//        this.sessionFactory = sessionFactory;
+//    }
+
+
 }
