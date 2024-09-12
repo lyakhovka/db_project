@@ -2,7 +2,6 @@ package com.javarush;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.javarush.config;
 import com.javarush.dao.CityDAO;
 import com.javarush.dao.CountryDAO;
 import com.javarush.domain.City;
@@ -11,17 +10,15 @@ import com.javarush.domain.CountryLanguage;
 import com.javarush.redis.CityCountry;
 import com.javarush.redis.Language;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisStringCommands;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.cfg.Environment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,6 +36,8 @@ public class Main {
     private final CityDAO cityDAO;
     private final CountryDAO countryDAO;
 
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
+
     private void getSampleRedisData(List<Integer> ids) {
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
             RedisStringCommands<String, String> sync = connection.sync();
@@ -47,7 +46,7 @@ public class Main {
                 try {
                     mapper.readValue(value, CityCountry.class);
                 } catch (JsonProcessingException e) {
-                    e.printStackTrace();
+                    logger.error("Failed to parse value for id: {}. Error: {}", id, e.getMessage());
                 }
             }
         }
@@ -137,7 +136,7 @@ public class Main {
                 try {
                     sync.set(String.valueOf(cityCountry.getId()), mapper.writeValueAsString(cityCountry));
                 } catch (JsonProcessingException e) {
-                    e.printStackTrace();
+                    logger.error("Failed to push to Redis value for cityCountry: {}. Error: {}", data, e.getMessage());
                 }
             }
 
