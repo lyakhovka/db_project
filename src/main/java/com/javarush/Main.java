@@ -39,7 +39,7 @@ public class Main {
     private final CityDAO cityDAO;
     private final CountryDAO countryDAO;
 
-    private void testRedisData(List<Integer> ids) {
+    private void getSampleRedisData(List<Integer> ids) {
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
             RedisStringCommands<String, String> sync = connection.sync();
             for (Integer id : ids) {
@@ -53,7 +53,7 @@ public class Main {
         }
     }
 
-    private void testMysqlData(List<Integer> ids) {
+    private void getSampleMysqlData(List<Integer> ids) {
         try (Session session = sessionFactory.getCurrentSession()) {
             session.beginTransaction();
             for (Integer id : ids) {
@@ -150,19 +150,17 @@ public class Main {
         List<City> allCities = main.fetchData(main);
         List<CityCountry> preparedData = main.transformData(allCities);
         main.pushToRedis(preparedData);
-        //закриємо поточну сесію, щоб точно зробити запит до БД, а не витянути дані з кеша
         main.sessionFactory.getCurrentSession().close();
 
-        //обираємо 10 випадкових id міст
-        //оскільки ми не робили обробку невалідних ситуацій, використовуй id, які існують БД
-        List<Integer> ids = List.of(3, 2545, 123, 4, 189, 89, 3458, 1189, 10, 102);
+
+        List<Integer> listOfRandomValidIds = List.of(3, 2545, 123, 4, 189, 89, 3458, 1189, 10, 102);
 
         long startRedis = System.currentTimeMillis();
-        main.testRedisData(ids);
+        main.getSampleRedisData(listOfRandomValidIds);
         long stopRedis = System.currentTimeMillis();
 
         long startMysql = System.currentTimeMillis();
-        main.testMysqlData(ids);
+        main.getSampleMysqlData(listOfRandomValidIds);
         long stopMysql = System.currentTimeMillis();
 
         System.out.println("Please, compare the results of fetching data from MySQL and Redis");
@@ -171,10 +169,5 @@ public class Main {
 
         main.shutdown();
     }
-
-//    public void setSessionFactory(SessionFactory sessionFactory) {
-//        this.sessionFactory = sessionFactory;
-//    }
-
 
 }
