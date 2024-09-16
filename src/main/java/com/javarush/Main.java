@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.javarush.config.getRedisClient;
-import static com.javarush.config.getSessionFactory;
+import static com.javarush.Config.getRedisClient;
+import static com.javarush.Config.getSessionFactory;
 import static java.util.Objects.nonNull;
 
 public class Main {

@@ -12,7 +12,7 @@ import org.hibernate.cfg.Environment;
 
 import java.util.Properties;
 
-public class config {
+public class Config {
     public static SessionFactory getSessionFactory() {
         final SessionFactory sessionFactory;
         Properties properties = new Properties();
